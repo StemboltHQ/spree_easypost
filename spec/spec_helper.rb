@@ -19,8 +19,6 @@ require 'rspec/rails'
 require 'database_cleaner'
 require 'ffaker'
 
-EasyPost.api_key = 'CvzYtuda6KRI9JjG7SAHbA'
-
 # Requires supporting ruby files with custom matchers and macros, etc,
 # in spec/support/ and its subdirectories.
 Dir[File.join(File.dirname(__FILE__), 'support/**/*.rb')].each { |f| require f }
@@ -70,7 +68,7 @@ RSpec.configure do |config|
   end
 
   # Before each spec check if it is a Javascript test and switch between using database transactions or not where necessary.
-  config.before :each do |example|
+  config.before :each do
     DatabaseCleaner.strategy = example.metadata[:js] ? :truncation : :transaction
     DatabaseCleaner.start
   end
