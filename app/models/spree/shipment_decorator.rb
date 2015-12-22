@@ -1,46 +1,42 @@
+require File.expand_path('../../spree_easypost/estimator', __FILE__)
+
 module Spree
-  module ShipmentDecorator
+  module ShipmentDecorator # :nodoc:
     def self.prepended(mod)
       mod.state_machine.before_transition(
         to: :shipped,
-        do: :buy_easypost_rate,
+        do: :buy_easypost_label,
         if: -> { Spree::EasyPost::CONFIGS[:purchase_labels?] }
       )
     end
 
-    def easypost_shipment
-      if selected_easy_post_shipment_id
-        @ep_shipment ||= ::EasyPost::Shipment.retrieve(selected_easy_post_shipment_id)
-      else
-        @ep_shipment = build_easypost_shipment
-      end
+    def buy_easypost_label
+      EasyPost::Shipment.new(self).buy_easypost_label
     end
 
-    private
+    def refresh_rates
+      return shipping_rates if shipped? || order.completed?
+      return [] unless can_get_rates?
 
-    def selected_easy_post_rate_id
-      selected_shipping_rate.easy_post_rate_id
-    end
+      # StockEstimator.new assigment below will replace the current shipping_method
+      original_shipping_method_id = shipping_method.try!(:id)
 
-    def selected_easy_post_shipment_id
-      selected_shipping_rate.easy_post_shipment_id
-    end
+      new_rates = Stock::Coordinator.estimator_class.new(order).shipping_rates(to_package)
 
-    def build_easypost_shipment
-      ::EasyPost::Shipment.create(
-        to_address: address.easypost_address,
-        from_address: stock_location.easypost_address,
-        parcel: to_package.easypost_parcel
-      )
-    end
-
-    def buy_easypost_rate
-      rate = easypost_shipment.rates.find do |rate|
-        rate.id == selected_easy_post_rate_id
+      # If one of the new rates matches the previously selected shipping
+      # method, select that instead of the default provided by the estimator.
+      # Otherwise, keep the default.
+      selected_rate = new_rates.detect{ |rate| rate.shipping_method_id == original_shipping_method_id }
+      if selected_rate
+        new_rates.each do |rate|
+          rate.selected = (rate == selected_rate)
+        end
       end
 
-      easypost_shipment.buy(rate)
-      self.tracking = easypost_shipment.tracking_code
+      self.shipping_rates = new_rates
+      self.save!
+
+      shipping_rates
     end
   end
 end

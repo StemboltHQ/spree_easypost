@@ -1,4 +1,3 @@
-require 'pry'
 require 'spec_helper'
 
 RSpec.describe Spree::EasyPost::ReturnAuthorization, :vcr do
@@ -24,17 +23,13 @@ RSpec.describe Spree::EasyPost::ReturnAuthorization, :vcr do
     it { is_expected.to be_a EasyPost::PostageLabel }
     it 'has the correct fields' do
       expect(subject).to have_attributes(
-         id: "pl_b0e149176a7b4313bb1d982705e71da6",
          object: "PostageLabel",
-         created_at: "2015-12-08T23:07:02Z",
-         updated_at: "2015-12-08T23:07:02Z",
          date_advance: 0,
          integrated_form: "none",
-         label_date: "2015-12-08T23:07:00Z",
          label_resolution: 300,
          label_size: "4x6",
          label_type: "default",
-         label_url: "http://assets.geteasypost.com/postage_labels/labels/20151208/c2e6cfedd0744e598ae2d9266f97aaed.png",
+         label_url: "http://assets.geteasypost.com/postage_labels/labels/20151217/13fd83ef5cdb4a8f8e77e02bf086c8d5.png",
          label_file_type: "image/png"
       )
     end
